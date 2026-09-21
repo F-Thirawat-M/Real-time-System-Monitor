@@ -1,101 +1,112 @@
-# Mini-htop: Real-time System Monitor
+# Mini-htop: โปรแกรมติดตามสถานะระบบแบบเรียลไทม์
 
-Mini-htop is a Linux terminal program written in C for the Operating Systems and
-System Calls Programming mini project. The **C program is the submission's main
-implementation**. It reads Linux's `/proc` virtual filesystem and calls POSIX
-APIs directly. The repository contains only the C implementation and its
-supporting tests, demo, report and presentation.
+Mini-htop เป็นโปรแกรมบน Terminal สำหรับ Linux เขียนด้วยภาษา C เพื่อใช้เป็นมินิโปรเจกต์วิชา Operating Systems and System Calls Programming โปรแกรมอ่านข้อมูลจากระบบไฟล์เสมือน `/proc` ของ Linux และเรียกใช้ POSIX APIs โดยตรง โฟลเดอร์นี้มีซอร์สโค้ด C ชุดทดสอบ โปรแกรมสำหรับเดโม รายงาน และสไลด์นำเสนอ
 
-## Requirements
+## ความต้องการของระบบ
 
-- Linux or Ubuntu on WSL
-- GCC or another C11 compiler, and `make`
-- A terminal at least about 80 columns wide
+- Linux หรือ Ubuntu บน WSL
+- GCC หรือคอมไพเลอร์ที่รองรับ C11 และคำสั่ง `make`
+- Terminal กว้างประมาณ 80 คอลัมน์ขึ้นไป
 
-The program has **no Python package dependencies**.
+โปรแกรม C ไม่ต้องติดตั้ง Python หรือไลบรารี Python
 
-## Build and run on Linux / Ubuntu WSL
+## วิธีคอมไพล์และใช้งาน
+
+เปิด Terminal ในโฟลเดอร์โปรเจกต์บน Linux หรือ Ubuntu/WSL แล้วรัน:
 
 ```bash
 make
 ./mini-htop
 ```
 
-For a non-interactive snapshot, useful for checking the build:
+ถ้าต้องการดูข้อมูลเพียงหนึ่งครั้งโดยไม่เปิดหน้าจอแบบโต้ตอบ ให้ใช้:
 
 ```bash
 ./mini-htop --once
 ```
 
-From PowerShell, first enter Ubuntu with `wsl -d Ubuntu`, change to this project
-directory under `/mnt/d/...`, then run the commands above. The project targets
-Linux and does not run natively on Windows.
+ถ้าเริ่มจาก PowerShell บน Windows ให้เข้า Ubuntu ก่อน แล้วไปยังโฟลเดอร์โปรเจกต์:
 
-## Controls
+```powershell
+wsl -d Ubuntu
+```
 
-| Key | Action |
+```bash
+cd /mnt/d/KKU_files/year3_semester1/CP353001/mini-project-os
+make
+./mini-htop
+```
+
+โปรเจกต์นี้ใช้ `/proc` จึงรันบน Linux/WSL ไม่ได้รันบน Windows โดยตรง
+
+## ปุ่มควบคุม
+
+| ปุ่ม | การทำงาน |
 | --- | --- |
-| `/` | Search by process name or PID; Enter ends editing |
-| `c`, `m`, `p`, `n` | Sort by CPU, RAM, PID, or name |
-| Up/Down or `j`/`k` | Select a process |
-| `t` | Confirm and send `SIGTERM` |
-| `K` (uppercase) | Confirm and send `SIGKILL` |
-| Space | Pause or resume collection |
-| `r` | Refresh immediately |
-| `q` | Quit |
+| `/` | ค้นหาด้วยชื่อโปรเซสหรือ PID; กด Enter เพื่อออกจากช่องค้นหา |
+| `c` | เรียงโปรเซสตาม CPU ที่ใช้ |
+| `m` | เรียงตาม RAM ที่ใช้ |
+| `p` | เรียงตาม PID |
+| `n` | เรียงตามชื่อโปรเซส |
+| ลูกศรขึ้น/ลง หรือ `j`/`k` | เลือกโปรเซสในตาราง |
+| `t` | ยืนยันก่อนส่ง `SIGTERM` |
+| `K` (ตัวใหญ่) | ยืนยันก่อนส่ง `SIGKILL` |
+| Space | หยุดหรือเริ่มอัปเดตข้อมูลต่อ |
+| `r` | อัปเดตทันทีเมื่อไม่ได้ Pause |
+| `q` | ออกจากโปรแกรม |
 
-`SIGTERM` asks a process to terminate and allows it to handle the signal.
-`SIGKILL` immediately ends it and cannot be handled. Mini-htop rejects PID 1 and
-its own PID, asks for confirmation, and checks the process start time before
-signalling so a replaced PID is less likely to be targeted. A tiny race remains
-between that check and `kill()`; do not use it to manage critical processes.
-Run as an ordinary user, never as `sudo`, during the class demo.
+`SIGTERM` เป็นคำขอให้โปรเซสหยุดทำงาน โดยโปรเซสสามารถรับ Signal และปิดตัวอย่างเรียบร้อยได้ ส่วน `SIGKILL` บังคับยุติทันทีและโปรเซสไม่สามารถดักจับ Signal นี้ได้
 
-## OS interfaces used
+ก่อนส่ง Signal โปรแกรมจะให้ยืนยัน ตรวจสอบ PID และเวลาเริ่มทำงานของโปรเซสอีกครั้ง และไม่อนุญาตให้ส่งไปยัง PID 1 หรือ PID ของตัวโปรแกรมเอง อย่างไรก็ตาม ยังมีโอกาสเล็กน้อยที่ PID จะเปลี่ยนระหว่างการตรวจสอบกับการเรียก `kill()` จึงไม่ควรใช้กับโปรเซสสำคัญของระบบ **สำหรับเดโมให้รันแบบผู้ใช้ทั่วไป ไม่ใช้ `sudo` และยุติเฉพาะโปรเซสทดลองที่สร้างเอง**
 
-| Interface | Purpose |
+## ข้อมูลที่แสดง
+
+- เปอร์เซ็นต์การใช้ CPU รวมและแยกตาม Core
+- ปริมาณและเปอร์เซ็นต์การใช้ RAM, Swap และพื้นที่ดิสก์ของ filesystem ราก (`/`)
+- ตารางโปรเซส: PID, ผู้ใช้, ชื่อ, สถานะ, CPU% และ RAM%
+- การค้นหา เรียงลำดับ และรีเฟรชข้อมูลแบบต่อเนื่อง
+
+ค่า CPU% ของโปรเซสที่ใช้หลาย Core อาจเกิน 100% ได้ เพราะค่านี้เทียบกับกำลังประมวลผลของหนึ่ง Core
+
+## POSIX APIs และข้อมูลจาก OS
+
+| ฟังก์ชัน | ใช้ทำอะไร |
 | --- | --- |
-| `open`, `read`, `close` | Read `/proc/stat`, `/proc/meminfo`, `/proc/[pid]/stat` |
-| `opendir`, `readdir`, `closedir` | Enumerate `/proc` process directories |
-| `stat`, `getpwuid` | Resolve process owner UID to a username |
-| `statvfs` | Get root filesystem capacity and free space |
-| `sysconf` | Read memory page size |
-| `kill` | Send `SIGTERM` or `SIGKILL` |
-| `termios`, `poll` | Read keyboard commands in an updating terminal UI |
+| `open`, `read`, `close` | อ่าน `/proc/stat`, `/proc/meminfo` และ `/proc/[pid]/stat` |
+| `opendir`, `readdir`, `closedir` | วนดูโฟลเดอร์ของโปรเซสใน `/proc` |
+| `stat`, `getpwuid` | หา UID เจ้าของโปรเซสและแปลงเป็นชื่อผู้ใช้ |
+| `statvfs` | อ่านขนาดและพื้นที่ว่างของ filesystem ราก |
+| `sysconf` | อ่านขนาดหน้า (page size) ของหน่วยความจำ |
+| `kill` | ส่ง `SIGTERM` หรือ `SIGKILL` |
+| `termios`, `poll` | รับปุ่มกดและอัปเดตหน้าจอ Terminal |
 
-`/proc` is Linux-specific, while most functions above are POSIX APIs. This
-project intentionally targets Linux rather than claiming to be cross-platform.
+`/proc` เป็นระบบไฟล์เสมือนเฉพาะ Linux ส่วนฟังก์ชันในตารางส่วนใหญ่เป็น POSIX APIs ทั้งนี้ POSIX API บางตัวเป็นฟังก์ชันของไลบรารี ไม่ใช่ kernel system call โดยตรง
 
-## Test
+## ทดสอบโปรแกรม
 
 ```bash
 make test
 ```
 
-The C test checks system metrics, refuses to terminate Mini-htop's own process,
-rejects a mismatched process start time, and sends `SIGTERM` and `SIGKILL` only
-to child processes created by the test. It does not signal unrelated processes.
+ชุดทดสอบจะตรวจการอ่านข้อมูลระบบ การป้องกันไม่ให้โปรแกรมยุติตัวเอง การตรวจเวลาเริ่มทำงานของโปรเซส และการส่ง `SIGTERM`/`SIGKILL` ไปยัง child process ที่ชุดทดสอบสร้างขึ้นเองเท่านั้น ไม่ส่ง Signal ไปยังโปรเซสอื่นในเครื่อง
 
-## Safe live demo
+## เดโมอย่างปลอดภัย
 
-Build a disposable CPU workload:
+เปิด Terminal แรกและสร้างโปรเซสทดลองที่ใช้ CPU:
 
 ```bash
 make demo-load
 ./demo-load
 ```
 
-Leave it running in its own terminal. In another terminal, run `./mini-htop`,
-search for `demo-load`, select its PID, then press `t` and confirm with `y`.
-The workload prints a graceful-shutdown message. Start it again, select the new
-PID and use uppercase `K` to demonstrate that `SIGKILL` stops it without that
-message. Confirm the PID before either action.
+เปิด Terminal ที่สองแล้วรัน `./mini-htop` ค้นหา `demo-load` ตรวจสอบ PID ให้ตรง เลือกแถวและกด `t` จากนั้นกด `y` เพื่อยืนยัน โปรเซสทดลองจะพิมพ์ข้อความว่าปิดตัวอย่างเรียบร้อย
 
-## Deliverables
+ถ้าต้องการแสดงความต่างของ `SIGKILL` ให้เปิด `./demo-load` ใหม่ เลือก PID ใหม่ใน Mini-htop แล้วกด `K` (ตัวใหญ่) และ `y` โปรเซสจะหยุดทันทีโดยไม่พิมพ์ข้อความปิดตัว ตรวจสอบ PID ทุกครั้งก่อนยืนยัน
 
-- Source code: `c_src/`, `Makefile`, `tests/`, `demo/`
-- Documentation: this README and `docs/REPORT.md`
-- Presentation: `presentation/Mini-htop.pptx`
+## ไฟล์สำหรับส่งงาน
 
-Add team names and course section to the report and presentation before
-submission. Demonstrate and test on the same Linux/WSL environment used in class.
+- ซอร์สโค้ด: `c_src/`, `Makefile`, `tests/`, `demo/`
+- เอกสาร: `README.md` และ `docs/REPORT.md`
+- สไลด์: `presentation/Mini-htop.pptx`
+
+ก่อนส่งงาน ให้เติมชื่อสมาชิกและข้อมูลกลุ่มเรียนในรายงานกับสไลด์ และทดลองรันบน Linux/WSL เครื่องที่จะใช้พรีเซนต์จริง

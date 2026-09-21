@@ -3,8 +3,8 @@
 Mini-htop is a Linux terminal program written in C for the Operating Systems and
 System Calls Programming mini project. The **C program is the submission's main
 implementation**. It reads Linux's `/proc` virtual filesystem and calls POSIX
-APIs directly. The earlier Python/Textual implementation remains in `main.py`,
-`monitor/`, and `ui/` as a separate prototype, not as the required C backend.
+APIs directly. The repository contains only the C implementation and its
+supporting tests, demo, report and presentation.
 
 ## Requirements
 
@@ -12,8 +12,7 @@ APIs directly. The earlier Python/Textual implementation remains in `main.py`,
 - GCC or another C11 compiler, and `make`
 - A terminal at least about 80 columns wide
 
-The C program has **no Python package dependencies**. `requirements.txt` is only
-for the optional Python prototype.
+The program has **no Python package dependencies**.
 
 ## Build and run on Linux / Ubuntu WSL
 
@@ -29,8 +28,8 @@ For a non-interactive snapshot, useful for checking the build:
 ```
 
 From PowerShell, first enter Ubuntu with `wsl -d Ubuntu`, change to this project
-directory under `/mnt/d/...`, then run the commands above. Running `main.py` on
-Windows does **not** demonstrate the required POSIX implementation.
+directory under `/mnt/d/...`, then run the commands above. The project targets
+Linux and does not run natively on Windows.
 
 ## Controls
 

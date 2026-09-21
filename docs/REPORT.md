@@ -9,8 +9,7 @@
 
 Mini-htop is a terminal-based system monitor. It lets a user inspect CPU, RAM,
 swap, disk and process usage in real time, find a process, and send a termination
-signal. The main implementation is in C and uses POSIX APIs on Linux. The older
-Python version is a prototype and is not needed to build or run the C program.
+signal. The implementation is in C and uses POSIX APIs on Linux.
 
 ## 2. Architecture
 
@@ -49,8 +48,7 @@ a second sample, so their initial reading may be zero.
 
 Not every function above is itself a kernel syscall. For example, `getpwuid()`
 is a POSIX library interface; `/proc` is a Linux virtual filesystem, not a
-POSIX API. The code calls POSIX interfaces directly and does not rely on
-`psutil` for the submitted C program.
+POSIX API. The code calls POSIX interfaces directly.
 
 ## 4. Data and calculations
 

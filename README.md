@@ -12,8 +12,60 @@ termination signals to a selected process.
 - Search by process name or PID
 - Sort by CPU, RAM, PID, or name
 - Send `SIGTERM` or `SIGKILL` after confirmation
-- Reads `/proc/stat` and `/proc/meminfo` directly on Linux
+- Reads `/proc/stat` and `/proc/meminfo` with POSIX file-descriptor operations on Linux
 - Falls back to `psutil` on Windows and macOS
+
+## Architecture
+
+```text
+Textual terminal UI
+        |
+        +-- SystemMonitor
+        |      +-- Linux: ProcfsReader -> /proc/stat, /proc/meminfo
+        |      +-- Other platforms: psutil fallback
+        |
+        +-- ProcessMonitor
+               +-- psutil process enumeration
+               +-- POSIX signals on Linux/macOS
+```
+
+The UI refreshes once per second. Slow data collection runs in a worker thread so
+the terminal remains responsive. On Linux, `ProcfsReader` takes two CPU samples and
+calculates usage from the change in total and idle ticks.
+
+## POSIX APIs and Linux interfaces
+
+| API or interface | Purpose |
+| --- | --- |
+| `os.open()` | Open `/proc/stat` and `/proc/meminfo` and obtain a file descriptor |
+| `os.read()` | Read kernel-provided resource data in chunks |
+| `os.close()` | Release the file descriptor even when reading fails |
+| `os.kill()` | Send `SIGTERM` or `SIGKILL` to the selected process |
+| `/proc/stat` | Obtain total and per-core CPU time counters |
+| `/proc/meminfo` | Obtain RAM and swap totals and availability |
+
+Python's `os` functions are direct wrappers over operating-system APIs. `psutil`
+is retained for process enumeration, disk statistics, and cross-platform fallback.
+
+## Resource calculations
+
+- **CPU:** compares two `/proc/stat` samples and calculates
+  `(total_delta - idle_delta) / total_delta * 100`.
+- **RAM:** calculates `MemTotal - MemAvailable` from `/proc/meminfo`.
+- **Swap:** calculates `SwapTotal - SwapFree` from `/proc/meminfo`.
+- **Disk:** uses `psutil.disk_usage()` for the system root.
+
+## Project structure
+
+```text
+main.py                 Application entry point
+monitor/procfs.py       POSIX file I/O and Linux /proc parsing
+monitor/system_info.py  Resource snapshots and platform fallback
+monitor/process_info.py Process listing, sorting, filtering, and signals
+ui/app.py               Textual terminal interface
+tests/                  Automated parser and POSIX file-I/O tests
+docs/                   Report and demonstration material
+```
 
 ## Install
 
@@ -60,6 +112,25 @@ CPU and memory data directly from the `/proc` virtual filesystem.
 Run the monitor as a normal user. Only terminate test processes that you created
 for the demonstration. `SIGTERM` allows a process to clean up; `SIGKILL` stops it
 immediately and cannot be handled by the target process.
+
+## Limitations
+
+- Direct `/proc` collection is available only on Linux and WSL.
+- Process enumeration and disk usage currently rely on `psutil`.
+- A normal user can signal only processes for which the operating system grants
+  permission.
+- Process CPU percentages require multiple samples and may initially be zero.
+
+## Testing
+
+Run the automated tests with:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+The tests cover `/proc/stat`, `/proc/meminfo`, CPU delta calculations, and reading
+files through POSIX file descriptors.
 
 ## Quick demo process
 

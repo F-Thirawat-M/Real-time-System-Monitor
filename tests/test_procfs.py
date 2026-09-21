@@ -1,9 +1,21 @@
+import tempfile
 import unittest
+from pathlib import Path
 
 from monitor.procfs import ProcfsReader
 
 
 class ProcfsReaderTests(unittest.TestCase):
+    def test_read_file_reads_until_eof(self) -> None:
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as file:
+            file.write(b"system-call-test\n" * 600)
+            path = Path(file.name)
+        self.addCleanup(path.unlink, missing_ok=True)
+
+        text = ProcfsReader.read_file(path)
+
+        self.assertEqual(text, "system-call-test\n" * 600)
+
     def test_parse_cpu_stat(self) -> None:
         parsed = ProcfsReader.parse_cpu_stat(
             "cpu  10 2 3 85 1 0 0 0 0 0\n"

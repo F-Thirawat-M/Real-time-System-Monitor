@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -24,6 +25,26 @@ class ProcfsReader:
     def __init__(self, root: Path = Path("/proc")) -> None:
         self.root = root
         self._previous_cpu: dict[str, tuple[int, int]] | None = None
+
+    @staticmethod
+    def read_file(path: Path) -> str:
+        """Read a procfs file through POSIX file-descriptor operations.
+
+        Python's os.open, os.read, and os.close are thin wrappers around the
+        corresponding operating-system APIs. Keeping this operation explicit
+        makes the system-call boundary visible for the project demonstration.
+        """
+        descriptor = os.open(os.fspath(path), os.O_RDONLY)
+        chunks: list[bytes] = []
+        try:
+            while True:
+                chunk = os.read(descriptor, 4096)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+        finally:
+            os.close(descriptor)
+        return b"".join(chunks).decode("utf-8")
 
     @staticmethod
     def parse_cpu_stat(text: str) -> dict[str, tuple[int, int]]:
@@ -64,10 +85,8 @@ class ProcfsReader:
 
     def snapshot(self) -> ProcfsSnapshot | None:
         try:
-            cpu_now = self.parse_cpu_stat((self.root / "stat").read_text(encoding="utf-8"))
-            memory = self.parse_meminfo(
-                (self.root / "meminfo").read_text(encoding="utf-8")
-            )
+            cpu_now = self.parse_cpu_stat(self.read_file(self.root / "stat"))
+            memory = self.parse_meminfo(self.read_file(self.root / "meminfo"))
         except (OSError, ValueError):
             return None
 
